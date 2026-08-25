@@ -1,0 +1,22 @@
+# Backend
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+python-dotenv==1.0.1
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+neo4j==5.27.0
+
+# NLP / NER
+spacy==3.7.5
+# python -m spacy download en_core_web_sm runs in Dockerfile
+
+# Graph Analysis
+networkx==3.4.2
+
+# Utilities
+aiofiles==24.1.0
+python-multipart==0.0.20
+httpx==0.28.1

@@ -1,0 +1,2 @@
+# See backend/requirements.txt for full dependency list
+# Install with: pip install -r backend/requirements.txt
