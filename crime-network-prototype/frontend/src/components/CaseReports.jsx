@@ -1,17 +1,16 @@
 import React, { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { api } from '../utils/api'
 import { useGraphData } from '../hooks/useGraphData'
 
-export default function CaseReports() {
+export default function CaseReports({ embedded }) {
   const { stats, refresh } = useGraphData()
-  const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [text, setText] = useState('')
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState(null)
   const [dragOver, setDragOver] = useState(false)
   const [uploadHistory, setUploadHistory] = useState([])
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const handleExtract = async () => {
     if (!text.trim()) return
@@ -30,10 +29,11 @@ export default function CaseReports() {
 
   const handleFileDrop = async (e) => {
     e.preventDefault()
+    e.stopPropagation()
     setDragOver(false)
-    const file = e.dataTransfer.files?.[0] || e.target.files?.[0]
+    const file = e.dataTransfer?.files?.[0] || e.target?.files?.[0]
     if (!file) return
-
+    setSelectedFile(file.name)
     setUploading(true)
     try {
       const res = await api.uploadFile(file)
@@ -55,16 +55,17 @@ export default function CaseReports() {
       setText('')
       setUploadHistory([])
       await refresh()
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
+  }
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const hasData = stats?.total_entities > 0
 
   return (
     <div className="case-reports">
-      {/* Hero Header */}
       <div className="intake-hero">
         <div className="intake-hero-text">
           <h2>Case Intake</h2>
@@ -72,7 +73,7 @@ export default function CaseReports() {
         </div>
         {hasData && (
           <div className="intake-hero-actions">
-            <button className="btn btn-primary" onClick={() => navigate('/graph')}>
+            <button className="btn btn-primary" onClick={() => scrollTo('graph')}>
               View Network Graph
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
@@ -81,34 +82,46 @@ export default function CaseReports() {
       </div>
 
       <div className="intake-grid">
-        {/* Left: Input */}
         <div className="intake-input-col">
-          {/* Upload Zone */}
           <div
-            className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-            onDragLeave={() => setDragOver(false)}
+            className={`upload-zone ${dragOver ? 'drag-over' : ''} ${selectedFile ? 'has-file' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOver(true) }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false) }}
             onDrop={handleFileDrop}
-            onClick={() => fileInputRef.current?.click()}
           >
             <input
               ref={fileInputRef}
               type="file"
               accept=".txt,.json,.csv"
-              onChange={handleFileDrop}
               style={{ display: 'none' }}
+              onChange={handleFileDrop}
             />
             <div className="upload-zone-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
-            <h3>Drop files here</h3>
-            <p>.txt, .json, or .csv</p>
+            {selectedFile && !uploading ? (
+              <div className="upload-file-selected">
+                <span className="file-icon">📄</span>
+                <span className="file-name">{selectedFile}</span>
+                <span className="file-ready">Ready to upload</span>
+              </div>
+            ) : (
+              <>
+                <h3>Drop files here</h3>
+                <p>.txt, .json, or .csv</p>
+              </>
+            )}
+            <button
+              className="btn btn-browse"
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
+              type="button"
+            >
+              Browse Files
+            </button>
           </div>
 
-          {/* Divider */}
           <div className="intake-divider"><span>or paste text</span></div>
 
-          {/* Text Input */}
           <div className="text-input-section">
             <textarea
               value={text}
@@ -118,24 +131,14 @@ export default function CaseReports() {
             />
             <div className="text-input-actions">
               <button className="btn btn-primary" onClick={handleExtract} disabled={!text.trim() || uploading}>
-                {uploading ? (
-                  <><span className="spinner-sm" /> Analyzing...</>
-                ) : (
-                  <>Extract &amp; Analyze</>
-                )}
+                {uploading ? (<><span className="spinner-sm" /> Analyzing...</>) : (<>Extract &amp; Analyze</>)}
               </button>
-              {hasData && (
-                <button className="btn btn-ghost" onClick={handleReset}>
-                  Clear All Data
-                </button>
-              )}
+              {hasData && (<button className="btn btn-ghost" onClick={handleReset}>Clear All Data</button>)}
             </div>
           </div>
         </div>
 
-        {/* Right: Status & Results */}
         <div className="intake-status-col">
-          {/* Upload History */}
           {uploadHistory.length > 0 && (
             <div className="status-card">
               <h4>Upload History</h4>
@@ -153,19 +156,18 @@ export default function CaseReports() {
             </div>
           )}
 
-          {/* Extraction Results */}
           {results && results.success !== false && (
             <div className="status-card">
               <h4>Extraction Results</h4>
               {results.results?.map((r, i) => (
                 <div key={i} className="result-section">
-                  {r.entities && Object.entries(r.entities).map(([type, items]) => (
-                    items?.length > 0 && (
+                  {r.entities && Object.entries(r.entities).filter(([type]) => type !== 'people_with_sources').map(([type, items]) => (
+                    Array.isArray(items) && items.length > 0 && (
                       <div key={type} className="entity-group">
-                        <h5>{type.charAt(0).toUpperCase() + type.slice(1)} ({items.length})</h5>
+                        <h5>{type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ({items.length})</h5>
                         <div className="entity-tags">
                           {items.map((item, j) => (
-                            <span key={j} className={`tag tag-${type === 'people' ? 'person' : type}`}>{item}</span>
+                            <span key={j} className={`tag tag-${type === 'people' ? 'person' : type}`}>{typeof item === 'string' ? item : item.name || JSON.stringify(item)}</span>
                           ))}
                         </div>
                       </div>
@@ -201,7 +203,6 @@ export default function CaseReports() {
             </div>
           )}
 
-          {/* Current Graph Stats */}
           {hasData && (
             <div className="status-card">
               <h4>Current Graph</h4>
@@ -212,6 +213,10 @@ export default function CaseReports() {
                   { label: 'Locations', value: stats.locations_mapped, max: 15, color: '#10b981' },
                   { label: 'Phones', value: stats.phones_traced, max: 15, color: '#3b82f6' },
                   { label: 'Financial', value: stats.financial_links, max: 10, color: '#a78bfa' },
+                  { label: 'Emails', value: stats.emails_found || 0, max: 15, color: '#06b6d4' },
+                  { label: 'Dates', value: stats.dates_extracted || 0, max: 20, color: '#f472b6' },
+                  { label: 'IPs', value: stats.ip_addresses_found || 0, max: 10, color: '#fb923c' },
+                  { label: 'Addresses', value: stats.addresses_found || 0, max: 10, color: '#84cc16' },
                 ].map(s => (
                   <div key={s.label} className="stat-bar-row">
                     <span className="stat-bar-label">{s.label}</span>
@@ -230,7 +235,6 @@ export default function CaseReports() {
             </div>
           )}
 
-          {/* Empty State */}
           {!hasData && !results && (
             <div className="status-card empty-state">
               <div className="empty-icon">

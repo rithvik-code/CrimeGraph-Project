@@ -2,7 +2,8 @@
 Graph Builder Service
 
 Maintains an in-memory NetworkX graph.
-Supports: persons, vehicles, phones, locations, financial accounts.
+Supports: persons, vehicles, phones, locations, financial accounts,
+          emails, dates, IP addresses, physical addresses.
 Outputs Cytoscape.js format for React frontend.
 """
 
@@ -20,7 +21,6 @@ class CaseGraph:
         if not self.g.has_node(name):
             self.g.add_node(name, type=node_type, **kwargs)
         else:
-            # Merge metadata
             for k, v in kwargs.items():
                 if k not in self.g.nodes[name]:
                     self.g.nodes[name][k] = v
@@ -40,6 +40,18 @@ class CaseGraph:
     def add_financial(self, account: str, **kwargs):
         self._ensure_node(account, "financial", **kwargs)
     
+    def add_email(self, email: str, **kwargs):
+        self._ensure_node(email, "email", **kwargs)
+    
+    def add_date(self, date: str, **kwargs):
+        self._ensure_node(date, "date", **kwargs)
+    
+    def add_ip_address(self, ip: str, **kwargs):
+        self._ensure_node(ip, "ip_address", **kwargs)
+    
+    def add_address(self, address: str, **kwargs):
+        self._ensure_node(address, "address", **kwargs)
+    
     # ── Edge helper ───────────────────────────────────────
     def link(self, a: str, b: str, relation: str, source: str = "",
              case_id: str = None, priority: str = "supporting", confidence: float = 0.5):
@@ -53,10 +65,8 @@ class CaseGraph:
             data["evidence"].append(source[:200])
         if case_id:
             data["case_ids"].add(case_id)
-        # Upgrade priority if needed
         if priority == "high":
             data["priority"] = "high"
-        # Update confidence
         if confidence > data.get("confidence", 0):
             data["confidence"] = confidence
     
@@ -88,13 +98,21 @@ class CaseGraph:
                 self.add_financial(case["financial_to"])
                 self.link(person, case["financial_to"], "receives_funds", case_id=case.get("case_id", ""))
             
+            if case.get("email"):
+                self.add_email(case["email"])
+                self.link(person, case["email"], "has_email", case_id=case.get("case_id", ""))
+            
+            if case.get("address"):
+                self.add_address(case["address"])
+                self.link(person, case["address"], "located_at", case_id=case.get("case_id", ""))
+            
             if case.get("connected_to"):
                 other = case["connected_to"]
                 self.add_person(other)
                 note = case.get("relation_note", "").lower()
                 if any(w in note for w in ("payment", "transfer", "fund")):
                     rel, priority = "financial_link", "high"
-                elif any(w in note for w in ("contact", "call", "phone")):
+                elif any(w in note for w in ("contact", "call", "phone", "email")):
                     rel, priority = "communication", "high"
                 elif any(w in note for w in ("lent", "vehicle")):
                     rel, priority = "vehicle_link", "supporting"
@@ -114,6 +132,14 @@ class CaseGraph:
             self.add_vehicle(v)
         for fin in entities.get("financial", []):
             self.add_financial(fin)
+        for em in entities.get("emails", []):
+            self.add_email(em)
+        for dt in entities.get("dates", []):
+            self.add_date(dt)
+        for ip in entities.get("ip_addresses", []):
+            self.add_ip_address(ip)
+        for addr in entities.get("addresses", []):
+            self.add_address(addr)
         
         for rel in relations:
             src = rel.get("source", "")
@@ -126,7 +152,7 @@ class CaseGraph:
                          case_id=source_label,
                          priority=rel.get("priority", "supporting"))
         
-        # Co-occurrence links
+        # Co-occurrence links — connect people to all their associated entities
         for p in entities.get("people", []):
             for loc in entities.get("locations", []):
                 self.link(p, loc, "located_at", case_id=source_label)
@@ -136,6 +162,19 @@ class CaseGraph:
                 self.link(p, v, "associated_vehicle", case_id=source_label)
             for fin in entities.get("financial", []):
                 self.link(p, fin, "associated_financial", case_id=source_label)
+            for em in entities.get("emails", []):
+                self.link(p, em, "has_email", case_id=source_label)
+            for ip in entities.get("ip_addresses", []):
+                self.link(p, ip, "associated_ip", case_id=source_label)
+            for addr in entities.get("addresses", []):
+                self.link(p, addr, "associated_address", case_id=source_label)
+        
+        # Link dates to people and locations as temporal context
+        for dt in entities.get("dates", []):
+            for p in entities.get("people", []):
+                self.link(p, dt, "occurred_on", case_id=source_label)
+            for loc in entities.get("locations", []):
+                self.link(loc, dt, "incident_date", case_id=source_label)
     
     # ── Analysis ──────────────────────────────────────────
     def person_pairs(self):
@@ -170,7 +209,6 @@ class CaseGraph:
             score += 20
             breakdown.append((f"Shared {t}: {s}", 20))
         
-        # Bonus for high-priority relations
         if any("financial" in r or "communication" in r for r in rels):
             score += 10
             breakdown.append(("High-priority relation type", 10))
@@ -193,11 +231,15 @@ class CaseGraph:
     def to_cytoscape_json(self) -> list:
         """Output Cytoscape.js-compatible elements array."""
         color_map = {
-            "person": "#e63946",
-            "phone": "#457b9d",
-            "location": "#2a9d8f",
-            "vehicle": "#f4a261",
-            "financial": "#e9c46a",
+            "person": "#ef4444",
+            "phone": "#3b82f6",
+            "location": "#10b981",
+            "vehicle": "#f59e0b",
+            "financial": "#a78bfa",
+            "email": "#06b6d4",
+            "date": "#f472b6",
+            "ip_address": "#fb923c",
+            "address": "#84cc16",
         }
         shape_map = {
             "person": "ellipse",
@@ -205,13 +247,21 @@ class CaseGraph:
             "location": "rectangle",
             "vehicle": "diamond",
             "financial": "round-hexagon",
+            "email": "round-rectangle",
+            "date": "cut-rectangle",
+            "ip_address": "barrel",
+            "address": "rectangle",
         }
         icon_map = {
-            "person": "👤",
-            "phone": "📱",
-            "location": "📍",
-            "vehicle": "🚗",
-            "financial": "💰",
+            "person": "",
+            "phone": "",
+            "location": "",
+            "vehicle": "",
+            "financial": "",
+            "email": "",
+            "date": "",
+            "ip_address": "",
+            "address": "",
         }
         
         nodes = []
@@ -255,6 +305,10 @@ class CaseGraph:
         locations = [n for n, d in self.g.nodes(data=True) if d.get("type") == "location"]
         phones = [n for n, d in self.g.nodes(data=True) if d.get("type") == "phone"]
         financials = [n for n, d in self.g.nodes(data=True) if d.get("type") == "financial"]
+        emails = [n for n, d in self.g.nodes(data=True) if d.get("type") == "email"]
+        dates = [n for n, d in self.g.nodes(data=True) if d.get("type") == "date"]
+        ip_addresses = [n for n, d in self.g.nodes(data=True) if d.get("type") == "ip_address"]
+        addresses = [n for n, d in self.g.nodes(data=True) if d.get("type") == "address"]
         
         case_ids = set()
         for _, _, d in self.g.edges(data=True):
@@ -270,6 +324,10 @@ class CaseGraph:
             "locations_mapped": len(locations),
             "phones_traced": len(phones),
             "financial_links": len(financials),
+            "emails_found": len(emails),
+            "dates_extracted": len(dates),
+            "ip_addresses_found": len(ip_addresses),
+            "addresses_found": len(addresses),
             "total_entities": self.g.number_of_nodes(),
             "total_relations": self.g.number_of_edges(),
             "connections": len(summary),
@@ -288,6 +346,27 @@ class CaseGraph:
                 "confidence": score,
                 "breakdown": breakdown,
                 "high_risk": score >= 80,
+            })
+        return result
+
+    def all_edges_summary(self) -> list:
+        """Return ALL edges in the graph (not just person-pairs) with types and confidence."""
+        result = []
+        for a, b, d in self.g.edges(data=True):
+            src_type = self.g.nodes[a].get("type", "unknown")
+            tgt_type = self.g.nodes[b].get("type", "unknown")
+            rels = sorted(d.get("relations", []))
+            score, breakdown = self.confidence_score(a, b)
+            result.append({
+                "source": a,
+                "target": b,
+                "source_type": src_type,
+                "target_type": tgt_type,
+                "relations": rels,
+                "confidence": score,
+                "breakdown": breakdown,
+                "high_risk": score >= 80,
+                "priority": d.get("priority", "supporting"),
             })
         return result
     

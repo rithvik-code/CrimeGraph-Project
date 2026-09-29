@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import cytoscape from 'cytoscape'
 import { useGraphData } from '../hooks/useGraphData'
 import { api } from '../utils/api'
+import MapView from './MapView'
 
 const LAYOUTS = {
   cose: { name: 'cose', animate: true, animationDuration: 800, nodeRepulsion: 8000, idealEdgeLength: 120, gravity: 0.3 },
@@ -16,6 +17,10 @@ const NODE_COLORS = {
   location: '#10b981',
   vehicle: '#f59e0b',
   financial: '#a78bfa',
+  email: '#06b6d4',
+  date: '#f472b6',
+  ip_address: '#fb923c',
+  address: '#84cc16',
 }
 
 export default function GraphView() {
@@ -28,8 +33,10 @@ export default function GraphView() {
   const [pathSource, setPathSource] = useState('')
   const [pathTarget, setPathTarget] = useState('')
   const [personNodes, setPersonNodes] = useState([])
+  const [viewMode, setViewMode] = useState('network') // 'network' or 'map'
 
   useEffect(() => {
+    if (viewMode !== 'network') return
     if (!containerRef.current || graphData.length === 0) return
     if (cyRef.current) cyRef.current.destroy()
 
@@ -65,6 +72,10 @@ export default function GraphView() {
         { selector: 'node.location', style: { 'shape': 'rectangle', 'width': 56, 'height': 32 } },
         { selector: 'node.phone', style: { 'shape': 'round-rectangle', 'width': 46, 'height': 28 } },
         { selector: 'node.financial', style: { 'shape': 'round-hexagon', 'width': 50, 'height': 38 } },
+        { selector: 'node.email', style: { 'shape': 'round-rectangle', 'width': 44, 'height': 26 } },
+        { selector: 'node.date', style: { 'shape': 'cut-rectangle', 'width': 48, 'height': 28 } },
+        { selector: 'node.ip_address', style: { 'shape': 'barrel', 'width': 44, 'height': 30 } },
+        { selector: 'node.address', style: { 'shape': 'rectangle', 'width': 52, 'height': 28 } },
         {
           selector: 'edge',
           style: {
@@ -106,7 +117,7 @@ export default function GraphView() {
     cy.on('tap', (evt) => { if (evt.target === cy) setSelectedNode(null) })
     cyRef.current = cy
     return () => { if (cyRef.current) cyRef.current.destroy() }
-  }, [graphData])
+  }, [graphData, viewMode])
 
   const handleHighlightPath = useCallback(async () => {
     if (!pathSource || !pathTarget || !cyRef.current) return
@@ -147,23 +158,54 @@ export default function GraphView() {
     <div className="graph-view">
       <div className="graph-header">
         <div>
-          <h2>Network Graph</h2>
+          <h2>Network Analysis</h2>
           <p>{hasData ? `${graphData.filter(n => n.data?.nodeType === 'person').length} persons, ${graphData.filter(n => 'source' in (n.data || {})).length} edges` : 'No data loaded'}</p>
         </div>
         <div className="graph-controls">
-          <select value={selectedLayout} onChange={(e) => applyLayout(e.target.value)}>
-            <option value="cose">Force-Directed</option>
-            <option value="breadthfirst">Hierarchy</option>
-            <option value="circle">Circle</option>
-            <option value="concentric">Concentric</option>
-          </select>
-          <button className="btn btn-ghost btn-sm" onClick={resetHighlight}>Reset</button>
+          <div className="view-toggle">
+            <button
+              className={`toggle-btn ${viewMode === 'network' ? 'active' : ''}`}
+              onClick={() => setViewMode('network')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>
+                <path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>
+              </svg>
+              Network
+            </button>
+            <button
+              className={`toggle-btn ${viewMode === 'map' ? 'active' : ''}`}
+              onClick={() => setViewMode('map')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Geographic
+            </button>
+          </div>
+          {viewMode === 'network' && (
+            <>
+              <select value={selectedLayout} onChange={(e) => applyLayout(e.target.value)}>
+                <option value="cose">Force-Directed</option>
+                <option value="breadthfirst">Hierarchy</option>
+                <option value="circle">Circle</option>
+                <option value="concentric">Concentric</option>
+              </select>
+              <button className="btn btn-ghost btn-sm" onClick={resetHighlight}>Reset</button>
+            </>
+          )}
         </div>
       </div>
 
-      {!hasData ? (
+      {viewMode === 'map' ? (
+        <MapView />
+      ) : !hasData ? (
         <div className="empty-graph">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.15"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.15">
+            <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/>
+            <path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>
+          </svg>
           <h3>No graph data</h3>
           <p>Upload case documents to generate the network graph.</p>
         </div>

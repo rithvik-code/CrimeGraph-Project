@@ -65,3 +65,56 @@ CREATE INDEX idx_entities_name ON entities(name);
 CREATE INDEX idx_relations_type ON relations(relation_type);
 CREATE INDEX idx_relations_priority ON relations(priority);
 CREATE INDEX idx_cases_status ON cases(status);
+
+-- ══════════════════════════════════════════════════════════════
+-- Investigator Productivity Suite — New Tables
+-- ══════════════════════════════════════════════════════════════
+
+-- ── Investigation Notes & Annotations ─────────────────────
+CREATE TABLE IF NOT EXISTS notes (
+    id SERIAL PRIMARY KEY,
+    entity_id TEXT NOT NULL,
+    entity_type TEXT DEFAULT 'unknown',
+    author TEXT DEFAULT 'Analyst',
+    content TEXT NOT NULL,
+    tag TEXT DEFAULT 'general' CHECK (tag IN ('general','suspicious','confirmed','needs-review','irrelevant')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_notes_entity ON notes(entity_id);
+CREATE INDEX idx_notes_tag ON notes(tag);
+
+-- ── Watchlist ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS watchlist (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    entity_type TEXT NOT NULL CHECK (entity_type IN ('person','phone','vehicle','email','ip_address','financial','location')),
+    metadata JSONB DEFAULT '{}',
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+    source TEXT DEFAULT 'manual',
+    UNIQUE(name, entity_type)
+);
+CREATE INDEX idx_watchlist_type ON watchlist(entity_type);
+
+-- ── Investigation Cases ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS investigations (
+    id SERIAL PRIMARY KEY,
+    case_name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    status TEXT DEFAULT 'active' CHECK (status IN ('active','closed','archived')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── Timeline Events ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS timeline_events (
+    id SERIAL PRIMARY KEY,
+    entity_id TEXT NOT NULL,
+    entity_type TEXT DEFAULT 'unknown',
+    event_date TEXT NOT NULL,
+    event_type TEXT DEFAULT 'mention',
+    description TEXT DEFAULT '',
+    source_label TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_timeline_date ON timeline_events(event_date);

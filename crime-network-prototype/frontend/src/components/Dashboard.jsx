@@ -1,5 +1,4 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useGraphData } from '../hooks/useGraphData'
 
 const StatCard = ({ label, value, color, icon }) => (
@@ -20,13 +19,17 @@ const icons = {
   locations: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>,
   phones: <><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12" y2="18.01"/></>,
   financial: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>,
+  emails: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
+  dates: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+  ip_addresses: <><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></>,
+  addresses: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
   connections: <><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></>,
   risk: <><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
 }
 
 export default function Dashboard() {
   const { stats, connections, loading, error } = useGraphData()
-  const navigate = useNavigate()
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   if (loading) return <div className="loading"><div className="spinner" /><p>Loading...</p></div>
   if (error) return <div className="error-state"><p>{error}</p></div>
@@ -39,6 +42,10 @@ export default function Dashboard() {
     { label: 'Locations', value: stats?.locations_mapped || 0, color: '#10b981', icon: icons.locations },
     { label: 'Phones', value: stats?.phones_traced || 0, color: '#3b82f6', icon: icons.phones },
     { label: 'Financial', value: stats?.financial_links || 0, color: '#a78bfa', icon: icons.financial },
+    { label: 'Emails', value: stats?.emails_found || 0, color: '#06b6d4', icon: icons.emails },
+    { label: 'Dates', value: stats?.dates_extracted || 0, color: '#f472b6', icon: icons.dates },
+    { label: 'IPs', value: stats?.ip_addresses_found || 0, color: '#fb923c', icon: icons.ip_addresses },
+    { label: 'Addresses', value: stats?.addresses_found || 0, color: '#84cc16', icon: icons.addresses },
     { label: 'Connections', value: stats?.connections || 0, color: '#6366f1', icon: icons.connections },
     { label: 'High Risk', value: stats?.high_risk_connections || 0, color: '#ef4444', icon: icons.risk },
   ]
@@ -50,13 +57,12 @@ export default function Dashboard() {
           <h2>Dashboard</h2>
           <p>Network intelligence overview</p>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-ghost" onClick={() => navigate('/cases')}>
+        <div className="header-actions">            <button className="btn btn-ghost" onClick={() => scrollTo('intake')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Data
           </button>
           {hasData && (
-            <button className="btn btn-primary" onClick={() => navigate('/graph')}>
+            <button className="btn btn-primary" onClick={() => scrollTo('graph')}>
               View Graph
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
@@ -71,7 +77,7 @@ export default function Dashboard() {
           </div>
           <h3>No data loaded</h3>
           <p>Upload case documents or paste reports to start building the intelligence graph.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/cases')}>
+          <button className="btn btn-primary" onClick={() => scrollTo('intake')}>
             Go to Case Intake
           </button>
         </div>
@@ -87,7 +93,7 @@ export default function Dashboard() {
             <div className="section">
               <div className="section-header">
                 <h3>Connections</h3>
-                <button className="btn btn-ghost btn-sm" onClick={() => navigate('/graph')}>View Graph</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => scrollTo('graph')}>View Graph</button>
               </div>
               <div className="connections-table">
                 <table>

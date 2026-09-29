@@ -65,6 +65,10 @@ class GraphStats(BaseModel):
     locations_mapped: int = 0
     phones_traced: int = 0
     financial_links: int = 0
+    emails_found: int = 0
+    dates_extracted: int = 0
+    ip_addresses_found: int = 0
+    addresses_found: int = 0
     total_entities: int = 0
     total_relations: int = 0
     high_risk_connections: int = 0

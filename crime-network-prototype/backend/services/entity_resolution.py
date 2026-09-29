@@ -161,4 +161,8 @@ def deduplicate_all(entities: dict) -> dict:
         "phones": entities.get("phones", []),  # Phones are already unique
         "financial": entities.get("financial", []),
         "organizations": entities.get("organizations", []),
+        "emails": entities.get("emails", []),
+        "dates": entities.get("dates", []),
+        "ip_addresses": entities.get("ip_addresses", []),
+        "addresses": entities.get("addresses", []),
     }
