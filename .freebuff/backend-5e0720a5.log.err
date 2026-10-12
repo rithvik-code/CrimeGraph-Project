@@ -1,0 +1,50 @@
+INFO:     Started server process [16712]
+INFO:     Waiting for application startup.
+INFO:backend.main:Starting CrimeGraph AI...
+WARNING:backend.main:PostgreSQL init failed (will use in-memory only): [WinError 1225] The remote computer refused the network connection
+WARNING:backend.services.neo4j_service:Constraint creation for Person: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Phone: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Location: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Vehicle: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Financial: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Email: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Date: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for IPAddress: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Constraint creation for Address: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+WARNING:backend.services.neo4j_service:Index creation: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)
+INFO:backend.services.neo4j_service:Neo4j constraints and indexes initialized
+INFO:backend.main:Neo4j constraints initialized
+WARNING:backend.main:Failed to load persisted data: [WinError 1225] The remote computer refused the network connection
+INFO:backend.main:CrimeGraph AI is ready
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency.com/feed/?best-topics=security&post_type=best: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency.com/feed/?best-topics=security&post_type=best: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: HTTP Error 404: Not Found
+WARNING:backend.routes.api:PostgreSQL persist failed: [WinError 1225] The remote computer refused the network connection
+WARNING:backend.routes.api:Neo4j sync failed: Couldn't connect to localhost:7687 (resolved to ('[::1]:7687', '127.0.0.1:7687')):
+Failed to establish connection to ResolvedIPv6Address(('::1', 7687, 0, 0)) (reason [WinError 1225] The remote computer refused the network connection)
+Failed to establish connection to ResolvedIPv4Address(('127.0.0.1', 7687)) (reason [WinError 1225] The remote computer refused the network connection)

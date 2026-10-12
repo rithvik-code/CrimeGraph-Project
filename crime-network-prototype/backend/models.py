@@ -1,14 +1,14 @@
 """Pydantic models for CrimeGraph AI API."""
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Any
 from datetime import datetime
 
 
 class CaseCreate(BaseModel):
-    case_id: str
-    title: str
-    status: str = "under_investigation"
+    case_id: str = Field(min_length=1, max_length=64)
+    title: str = Field(min_length=1, max_length=255)
+    status: str = Field(default="under_investigation", min_length=1, max_length=32)
 
 
 class CaseResponse(BaseModel):
@@ -20,10 +20,10 @@ class CaseResponse(BaseModel):
 
 
 class EntityBase(BaseModel):
-    name: str
-    entity_type: str  # person, vehicle, location, phone, financial
-    metadata: dict = {}
-    confidence: float = 1.0
+    name: str = Field(min_length=1, max_length=255)
+    entity_type: str = Field(min_length=1, max_length=32)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
 class EntityResponse(EntityBase):
@@ -32,13 +32,13 @@ class EntityResponse(EntityBase):
 
 
 class RelationBase(BaseModel):
-    source_name: str
-    target_name: str
-    relation_type: str
-    priority: str = "supporting"
-    confidence: float = 0.5
-    evidence: list = []
-    case_id: Optional[str] = None
+    source_name: str = Field(min_length=1, max_length=255)
+    target_name: str = Field(min_length=1, max_length=255)
+    relation_type: str = Field(min_length=1, max_length=64)
+    priority: str = Field(default="supporting", min_length=1, max_length=16)
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    evidence: list[Any] = Field(default_factory=list)
+    case_id: Optional[str] = Field(default=None, max_length=64)
 
 
 class RelationResponse(RelationBase):
@@ -46,8 +46,8 @@ class RelationResponse(RelationBase):
 
 
 class ExtractionRequest(BaseModel):
-    text: str = ""
-    source_name: str = "manual"
+    text: str = Field(default="", max_length=1_000_000)
+    source_name: str = Field(default="manual", min_length=1, max_length=255)
 
 
 class ExtractionResponse(BaseModel):
@@ -85,6 +85,6 @@ class AnomalyResponse(BaseModel):
 
 class UploadResponse(BaseModel):
     success: bool
-    results: list = []
-    stats: dict = {}
+    results: list = Field(default_factory=list)
+    stats: dict = Field(default_factory=dict)
     message: str = ""

@@ -8,7 +8,8 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Override with API_TARGET when the backend runs on a non-default port
+        target: process.env.API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
     },

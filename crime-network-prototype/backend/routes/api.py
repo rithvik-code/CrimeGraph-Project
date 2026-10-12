@@ -22,6 +22,7 @@ import csv
 import json
 import logging
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from backend.config import MAX_UPLOAD_BYTES, MAX_TEXT_CHARS
 from backend.services.graph import CaseGraph
 from backend.services.ner import extract_entities, extract_relations
 from backend.services.entity_resolution import deduplicate_all
@@ -227,6 +228,8 @@ async def get_neo4j_stats():
 async def extract_from_text_endpoint(text: str = Form(...), source_name: str = Form("manual")):
     if not text.strip():
         raise HTTPException(status_code=400, detail="No text provided")
+    if len(text) > MAX_TEXT_CHARS:
+        raise HTTPException(status_code=413, detail=f"Text exceeds the {MAX_TEXT_CHARS:,}-character limit")
 
     entities = extract_entities(text)
     entities = deduplicate_all(entities)
@@ -256,6 +259,10 @@ async def upload_text_endpoint(data: dict):
 
     if not text.strip():
         raise HTTPException(status_code=400, detail="No text provided")
+    if not isinstance(text, str):
+        raise HTTPException(status_code=422, detail="text must be a string")
+    if len(text) > MAX_TEXT_CHARS:
+        raise HTTPException(status_code=413, detail=f"Text exceeds the {MAX_TEXT_CHARS:,}-character limit")
 
     entities = extract_entities(text)
     entities = deduplicate_all(entities)
@@ -289,6 +296,8 @@ async def upload_file_endpoint(file: UploadFile = File(...)):
 
     try:
         content = await file.read()
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit")
 
         if filename.endswith(".json"):
             data = json.loads(content.decode("utf-8"))
@@ -331,7 +340,7 @@ async def upload_file_endpoint(file: UploadFile = File(...)):
             graph.load_cases(cases)
             results.append({"type": "structured", "count": len(cases), "label": filename})
 
-        else:
+        elif filename.endswith((".txt", ".md", ".log")):
             text = content.decode("utf-8")
             entities = extract_entities(text)
             entities = deduplicate_all(entities)
@@ -350,8 +359,14 @@ async def upload_file_endpoint(file: UploadFile = File(...)):
                 "relations": relations,
             })
 
+        else:
+            raise HTTPException(status_code=415, detail="Unsupported file type. Use .json, .csv, .txt, .md, or .log")
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.exception("File upload processing failed")
+        raise HTTPException(status_code=400, detail="Unable to process the uploaded file")
 
     anomalies = graph.detect_anomalies()
 

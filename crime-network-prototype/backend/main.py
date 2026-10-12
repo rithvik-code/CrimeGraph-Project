@@ -169,8 +169,8 @@ async def health():
         async with AsyncSessionLocal() as session:
             result = await session.execute(text("SELECT 1"))
             status["databases"]["postgresql"] = "connected"
-    except Exception as e:
-        status["databases"]["postgresql"] = f"error: {str(e)[:80]}"
+    except Exception:
+        status["databases"]["postgresql"] = "unavailable"
 
     # Check Neo4j
     try:
@@ -180,7 +180,10 @@ async def health():
             result = await session.run("RETURN 1 AS test")
             await result.single()
             status["databases"]["neo4j"] = "connected"
-    except Exception as e:
-        status["databases"]["neo4j"] = f"error: {str(e)[:80]}"
+    except Exception:
+        status["databases"]["neo4j"] = "unavailable"
+
+    if any(value != "connected" for value in status["databases"].values()):
+        status["status"] = "degraded"
 
     return status
