@@ -19,4 +19,6 @@ CORS_ORIGINS = [
 ]
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 MAX_TEXT_CHARS = int(os.getenv("MAX_TEXT_CHARS", str(1_000_000)))
+REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
+APP_ENV = os.getenv("APP_ENV", "development").lower()
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "data"))

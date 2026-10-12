@@ -582,3 +582,8 @@ INFO:     127.0.0.1:59673 - "GET /health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61133 - "GET /health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:53642 - "GET /api/crime-news HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56860 - "GET /api/crime-news HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62478 - "GET /api/crime-news HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63956 - "GET /api/crime-news HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57469 - "GET /api/crime-news HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61757 - "GET /api/crime-news HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60912 - "GET /api/crime-news HTTP/1.1" 200 OK

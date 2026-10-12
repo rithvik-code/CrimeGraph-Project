@@ -9,13 +9,16 @@ Architecture:
 """
 
 import logging
+import time
+import uuid
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routes.api import router as api_router
 from backend.routes.investigator import router as investigator_router
 from backend.routes.crime_news import router as crime_news_router
-from backend.config import CORS_ORIGINS
+from backend.config import CORS_ORIGINS, APP_ENV
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -125,6 +128,35 @@ app = FastAPI(
     version="3.0.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next):
+    """Attach a request ID and consistent timing headers to every response."""
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    started = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception("Unhandled request failure", extra={"request_id": request_id})
+        response = JSONResponse(status_code=500, content={
+            "detail": "Internal server error",
+            "request_id": request_id,
+        })
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Response-Time-ms"] = f"{(time.perf_counter() - started) * 1000:.1f}"
+    return response
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    if APP_ENV == "production":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return response
 
 # ── CORS ──────────────────────────────────────────────────
 app.add_middleware(
