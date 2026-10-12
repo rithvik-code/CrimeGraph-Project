@@ -6,10 +6,21 @@ like shortest path, community detection, and centrality analysis.
 """
 
 import logging
+import re
 from typing import Optional
 from backend.database import get_neo4j
 
 logger = logging.getLogger(__name__)
+
+_RELATION_NAME = re.compile(r"^[A-Z][A-Z0-9_]{0,47}$")
+
+def _cypher_relation_name(value: str) -> str:
+    """Return a safe Neo4j relationship token or a stable fallback."""
+    candidate = re.sub(r"[^A-Za-z0-9_]+", "_", str(value or "LINKED")).upper().strip("_")
+    if not candidate or not candidate[0].isalpha():
+        candidate = f"LINK_{candidate}" if candidate else "LINKED"
+    candidate = candidate[:48]
+    return candidate if _RELATION_NAME.fullmatch(candidate) else "LINKED"
 
 
 async def init_neo4j_constraints():
@@ -57,9 +68,6 @@ async def sync_graph_to_neo4j(graph):
     """Sync the entire NetworkX graph to Neo4j."""
     driver = get_neo4j()
     async with driver.session() as session:
-        # Clear existing data
-        await session.run("MATCH (n) DETACH DELETE n")
-
         # Create all nodes
         for node_id, data in graph.g.nodes(data=True):
             ntype = data.get("type", "person")
@@ -74,7 +82,7 @@ async def sync_graph_to_neo4j(graph):
             rels = sorted(data.get("relations", []))
             priority = data.get("priority", "supporting")
             for rel_type in rels:
-                safe_rel = rel_type.upper().replace(" ", "_")
+                safe_rel = _cypher_relation_name(rel_type)
                 await session.run(
                     f"MATCH (a {{name: $src}}), (b {{name: $tgt}}) "
                     f"MERGE (a)-[r:{safe_rel}]->(b) "

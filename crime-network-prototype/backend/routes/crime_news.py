@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter
 from xml.etree import ElementTree as ET
 import urllib.request
+import asyncio
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
@@ -202,7 +203,7 @@ async def get_crime_news():
     all_news = []
     seen_titles = set()
     for feed in RSS_FEEDS:
-        items = _fetch_rss(feed["url"])
+        items = await asyncio.to_thread(_fetch_rss, feed["url"])
         for item in items:
             title = item["title"]
             if title.lower() in seen_titles: continue
