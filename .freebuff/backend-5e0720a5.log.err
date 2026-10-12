@@ -63,3 +63,13 @@ WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency
 WARNING:backend.routes.crime_news:RSS fetch failed for https://feeds.npr.org/1004/rss.xml: <urlopen error [Errno 11001] getaddrinfo failed>
 WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: <urlopen error [Errno 11001] getaddrinfo failed>
 WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: <urlopen error [Errno 11001] getaddrinfo failed>
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency.com/feed/?best-topics=security&post_type=best: <urlopen error _ssl.c:1064: The handshake operation timed out>
+WARNING:backend.routes.crime_news:RSS fetch failed for https://feeds.npr.org/1004/rss.xml: <urlopen error [Errno 11001] getaddrinfo failed>
+WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: <urlopen error [Errno 11001] getaddrinfo failed>
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: <urlopen error [Errno 11001] getaddrinfo failed>
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency.com/feed/?best-topics=security&post_type=best: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.reutersagency.com/feed/?best-topics=security&post_type=best: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for http://rss.cnn.com/rss/crimejustice.rss: HTTP Error 404: Not Found
+WARNING:backend.routes.crime_news:RSS fetch failed for https://www.theguardian.com/uk/crime/rss: HTTP Error 404: Not Found

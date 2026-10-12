@@ -21,4 +21,7 @@ MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 MAX_TEXT_CHARS = int(os.getenv("MAX_TEXT_CHARS", str(1_000_000)))
 REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
 APP_ENV = os.getenv("APP_ENV", "development").lower()
+API_KEYS = {key.strip() for key in os.getenv("API_KEYS", "").split(",") if key.strip()}
+AUTH_ENABLED = os.getenv("AUTH_ENABLED", "false").lower() == "true" and bool(API_KEYS)
+RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "data"))

@@ -11,6 +11,7 @@ Architecture:
 import logging
 import time
 import uuid
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -18,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routes.api import router as api_router
 from backend.routes.investigator import router as investigator_router
 from backend.routes.crime_news import router as crime_news_router
-from backend.config import CORS_ORIGINS, APP_ENV
+from backend.config import CORS_ORIGINS, APP_ENV, API_KEYS, AUTH_ENABLED, RATE_LIMIT_PER_MINUTE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -128,6 +129,7 @@ app = FastAPI(
     version="3.0.0",
     lifespan=lifespan,
 )
+_request_windows = defaultdict(deque)
 
 
 @app.middleware("http")
@@ -146,6 +148,26 @@ async def request_context_middleware(request: Request, call_next):
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Response-Time-ms"] = f"{(time.perf_counter() - started) * 1000:.1f}"
     return response
+
+
+@app.middleware("http")
+async def api_access_middleware(request: Request, call_next):
+    """Optional API-key auth plus a small bounded in-process rate limiter."""
+    if request.url.path.startswith("/api"):
+        if AUTH_ENABLED and request.headers.get("X-API-Key") not in API_KEYS:
+            return JSONResponse(status_code=401, content={"detail": "API authentication required"})
+
+        client = request.client.host if request.client else "unknown"
+        bucket = _request_windows[client]
+        now = time.monotonic()
+        while bucket and now - bucket[0] >= 60:
+            bucket.popleft()
+        if len(bucket) >= RATE_LIMIT_PER_MINUTE:
+            response = JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+            response.headers["Retry-After"] = "60"
+            return response
+        bucket.append(now)
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -219,3 +241,16 @@ async def health():
         status["status"] = "degraded"
 
     return status
+
+
+@app.get("/metrics")
+async def metrics():
+    """Small JSON operational snapshot suitable for a local monitor."""
+    from backend.routes.api import graph
+    return {
+        "service": app.title,
+        "environment": APP_ENV,
+        "graph": graph.stats(),
+        "rate_limit_clients": len(_request_windows),
+        "auth_enabled": AUTH_ENABLED,
+    }
